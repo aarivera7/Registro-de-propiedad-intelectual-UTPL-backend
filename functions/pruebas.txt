@@ -1,0 +1,12 @@
+{"name":"patent1",
+"type":"patent",
+"create_date":"05/07/2023",
+"description":"patent1",
+"application_date":"05/07/2023",
+"members": [
+    {
+        "name": "Alfonso",
+        "apellido":"Pasarela"
+    }
+]
+}
