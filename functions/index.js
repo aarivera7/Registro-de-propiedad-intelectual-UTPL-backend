@@ -22,9 +22,9 @@ const {setGlobalOptions} = require("firebase-functions/v2");
 setGlobalOptions({maxInstances: 10});
 const functions = require("firebase-functions/v1");
 
-const projects = require("./collections/projects");
-const messages = require("./collections/messages");
-const meetings = require("./collections/meetings");
+const projects = require("./collectionFunctions/projects");
+const messages = require("./collectionFunctions/messages");
+const meetings = require("./collectionFunctions/meetings");
 const onFirestore = require("./onFirestore");
 const onStorage = require("./onStorage");
 
@@ -74,6 +74,7 @@ module.exports.requestsForAdvice = onCall(async (request) => {
         "en breves se comunicará la persona encargada de la asesoría " +
         "para la agendación de la reunión.",
         items: "",
+        button: "",
       },
   );
 

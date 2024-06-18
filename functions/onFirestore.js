@@ -3,10 +3,8 @@ const app = require("./index");
 const {HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentDeleted, onDocumentUpdated} =
 require("firebase-functions/v2/firestore");
-const {defineString} = require("firebase-functions/params");
 
 const storage = app.storage;
-const nodemailer = require("nodemailer");
 const sendEmail = require("./mailer");
 
 
@@ -30,10 +28,10 @@ exports.onChangeProject = onDocumentUpdated("patents/{patentId}",
 
       if (beforeData.documents != afterData.documents) {
         for (const document in afterData.documents || {}) {
-          if (beforeData.documents && beforeData.documents[document] && (
+          if (beforeData.documents && beforeData.documents[document] &&
+            afterData.documents[document].observation.trim() != "" && (
             (beforeData.documents[document].observation !=
             afterData.documents[document].observation))) {
-
             await sendEmail(
                 afterData.email,
                 `Observaciones del documento "${document}" del 
@@ -41,10 +39,16 @@ exports.onChangeProject = onDocumentUpdated("patents/{patentId}",
                 {
                   title: `REQUISITOS - OBSERVACIONES DEL DOCUMENTO ${document}`,
                   name: afterData.authorName,
-                  body: `Le informamos que se HAN REALIZADO OBSERVACIONES en el siguiente documento del proyecto "${afterData.name}": ${document}`,
-                  items: `<b>Observaciones:</b> ${afterData.documents[document].observation}`
+                  body: `Le informamos que se HAN REALIZADO OBSERVACIONES en 
+                  el siguiente documento del proyecto "${afterData.name}": 
+                  ${document}`,
+                  items: `<b>Observaciones:</b> 
+                  ${afterData.documents[document].observation}`,
                 },
-            );
+            ).catch((error) => {
+              throw new HttpsError("internal", "Error sending email!",
+                  {error: error});
+            });
 
 
             /* sendEmailTransporter(
@@ -66,8 +70,10 @@ exports.onChangeProject = onDocumentUpdated("patents/{patentId}",
 );
 
 
+/* Define some parameters
+const nodemailer = require("nodemailer");
+const {defineString} = require("firebase-functions/params");
 
-// Define some parameters
 const user = defineString("USER_EMAIL");
 const pass = defineString("PASSWORD_EMAIL");
 
@@ -99,4 +105,4 @@ const sendEmailTransporter = async (from, to, subject, html) => {
   } catch (error) {
     throw new HttpsError("internal", "Error sending email!", {error: error});
   }
-};
+}; */

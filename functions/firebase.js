@@ -1,9 +1,10 @@
-const {initializeApp} = require("firebase-admin/app");
-const {getFirestore} = require("firebase-admin/firestore");
-const {getStorage} = require("firebase-admin/storage");
+const app = require("./index");
+const {HttpsError} = require("firebase-functions/v2/https");
 
-const app = initializeApp(); // no arguments uses the default service account
+module.exports.getUser = (uid) => {
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Authentication Required!");
+  }
 
-exports.app = app;
-exports.db = getFirestore(app);
-exports.storage = getStorage(app);
+  return app.db.collection("users").doc(uid).get();
+};
