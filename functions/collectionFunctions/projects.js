@@ -274,10 +274,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 + "los requisitos para revisión de estado de la " +
           "técnica HA SIDO APROBADO" + body2,
-          items: `<b>Fecha de presentación: </b>
-          ${project.createDate.toDate().toISOString()}`,
-          button: `<a class="button" href="https://patentes-utpl.web.app/" 
-          target="_black" >IR AL SISTEMA</a>`,
+          items: new SafeString(`<b>Fecha de presentación: </b>
+          ${project.createDate.toDate().toISOString()}`),
+          button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
+          target="_black" >IR AL SISTEMA</a>`),
         },
     );
   } else if (request.data.typeEmail == "approved-step2") {
@@ -289,10 +289,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 + "la elaboración de la memoria descriptiva" +
           " HA SIDO APROBADO" + body2,
-          items: `<b>Fecha de presentación: </b>
-          ${project.createDate.toDate().toISOString()}`,
-          button: `<a class="button" href="https://patentes-utpl.web.app/" 
-          target="_black" >IR AL SISTEMA</a>`,
+          items: new SafeString(`<b>Fecha de presentación: </b>
+          ${project.createDate.toDate().toISOString()}`),
+          button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
+          target="_black" >IR AL SISTEMA</a>`),
         },
     );
   } else if (request.data.typeEmail == "approved-step5" &&
@@ -305,10 +305,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 +
           "se HA SIDO APROBADO todos los requisitos (documentación)" + body2,
-          items: `<b>Fecha de presentación: </b>
-          ${project.createDate.toDate().toISOString()}`,
-          button: `<a class="button" href="https://patentes-utpl.web.app/" 
-          target="_black" >IR AL SISTEMA</a>`,
+          items: new SafeString(`<b>Fecha de presentación: </b>
+          ${project.createDate.toDate().toISOString()}`),
+          button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
+          target="_black" >IR AL SISTEMA</a>`),
         },
     );
   } else if (request.data.typeEmail == "contract" &&
@@ -325,13 +325,13 @@ exports.sendEmail = onCall(async (request) => {
           "puede ingresar al sistema para descargarlo y proceder " +
           "con la firma electrónica requerida, posterior a ello, " +
           "se requeriere que lo suba en el segundo paso",
-          items: `<b>Nombre de invensión:</b> 
+          items: new SafeString(`<b>Nombre de invensión:</b> 
           ${project.name}
           <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}
-          <b>Tipo de propiedad:</b> ${project.type}`,
-          button: `<a class="button" href="${project.contract.document}" 
-          target="_black" >IR AL SISTEMA</a>`,
+          <b>Tipo de propiedad:</b> ${project.type}`),
+          button: new SafeString(`<a class="button" href="${project.contract.document}" 
+          target="_black" >IR AL SISTEMA</a>`),
         },
     );
   } else if (request.data.typeEmail == "sendEmail-step1") {
@@ -345,7 +345,7 @@ exports.sendEmail = onCall(async (request) => {
           " está listo para la revisión, por favor ingrese al sistema " +
           "para revisar la información ingresada y proceder con la " +
           "aprobación del mismo.",
-          items: `<b>Nombre del autor:</b> ${project.nameAuthor}<br>
+          items: new SafeString(`<b>Nombre del autor:</b> ${project.nameAuthor}<br>
           <b>Nombre de invensión:</b> ${project.name}
           <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}<br>
@@ -355,9 +355,9 @@ exports.sendEmail = onCall(async (request) => {
           ${project.tentativeTitle}<br>
           <b>Breve descripción de la invención:</b> ${project.description}<br>
           <b>Breve resumen de la invención:</b> ${project.summary}<br>
-          <b>Tipo de propiedad:</b> Patente<br>`,
-          button: `<a class="button" href="https://patentes-utpl.web.app/" 
-          target="_black" >IR AL SISTEMA</a>`,
+          <b>Tipo de propiedad:</b> Patente<br>`),
+          button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
+          target="_black" >IR AL SISTEMA</a>`),
         },
     );
   }

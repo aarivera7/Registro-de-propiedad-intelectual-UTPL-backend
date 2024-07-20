@@ -42,8 +42,8 @@ exports.onChangeProject = onDocumentUpdated("patents/{patentId}",
                   body: `Le informamos que se HAN REALIZADO OBSERVACIONES en 
                   el siguiente documento del proyecto "${afterData.name}": 
                   ${document}`,
-                  items: `<b>Observaciones:</b> 
-                  ${afterData.documents[document].observation}`,
+                  items: new SafeString(`<b>Observaciones:</b> 
+                  ${afterData.documents[document].observation}`),
                 },
             ).catch((error) => {
               throw new HttpsError("internal", "Error sending email!",

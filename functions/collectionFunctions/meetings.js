@@ -82,11 +82,11 @@ exports.addReviewMeeting = onCall(async (request) => {
           name: project.nameAuthor,
           body: "Le informamos que se ha programado una reunión para la " +
           "creación de su proyecto de propiedad intelectual.",
-          items: `<b>Fecha:</b> ${timeStart.getDate()}/
+          items: new SafeString(`<b>Fecha:</b> ${timeStart.getDate()}/
           ${timeStart.getMonth()}/${timeStart.getFullYear()}<br>
           <b>Hora:</b> ${strTimeStart} - ${strTimeFinish}<br>
           <b>Lugar:</b> ${request.data.place}<br>
-          <b>Modalidad:</b> ${request.data.modality}<br>`,
+          <b>Modalidad:</b> ${request.data.modality}<br>`),
         },
     ).catch((error) => {
       throw new HttpsError("internal", "Error sending email!", {error: error});
@@ -166,12 +166,12 @@ exports.addReviewMeeting = onCall(async (request) => {
         name: project.nameAuthor,
         body: "Le informamos que se ha agendado la reunión de" + typeWord +
         ", bajo los siguientes criterios.",
-        items: `<b>Nombre de la invensión:</b> ${project.name}<br>
+        items: new SafeString(`<b>Nombre de la invensión:</b> ${project.name}<br>
         <b>Fecha:</b> ${timeStart.getDate()}/
         ${timeStart.getMonth()}/${timeStart.getFullYear()}<br>
         <b>Hora:</b> ${strTimeStart} - ${strTimeFinish}<br>
         <b>Modalidad:</b> ${request.data.modality}<br>
-        <b>Lugar:</b> ${request.data.place}<br>`,
+        <b>Lugar:</b> ${request.data.place}<br>`),
       },
   ).catch((error) => {
     throw new HttpsError("internal", "Error sending email!", {error: error});
