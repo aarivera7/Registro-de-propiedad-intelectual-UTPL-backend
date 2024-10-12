@@ -2,6 +2,7 @@ const app = require("../index");
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {Timestamp} = require("firebase-admin/firestore");
+const {SafeString} = require("handlebars");
 
 const db = app.db;
 const sendEmail = require("../mailer");
@@ -42,7 +43,7 @@ exports.addReviewMeeting = onCall(async (request) => {
         "You are not authorized to perform this action!");
   }
 
-  const documentRef = db.collection("patents").doc(request.data.id);
+  const documentRef = db.collection("projects").doc(request.data.id);
   const document = documentRef.get();
 
   const project = (await document).data();
@@ -59,10 +60,10 @@ exports.addReviewMeeting = onCall(async (request) => {
 
   if (request.data.type == "progress-review") {
     type = "progressReviewMeeting";
-    step = project.numStep + 1;
+    step = 3;
   } else if (request.data.type == "final-review") {
     type = "finalReviewMeeting";
-    step = project.numStep + 1;
+    step = 4;
   } else if (request.data.type == "start-registration") {
     db.collection("meetings").doc().set({
       type: type,
@@ -164,9 +165,10 @@ exports.addReviewMeeting = onCall(async (request) => {
       {
         title: title,
         name: project.nameAuthor,
-        body: "Le informamos que se ha agendado la reunión de" + typeWord +
-        ", bajo los siguientes criterios.",
-        items: new SafeString(`<b>Nombre de la invensión:</b> ${project.name}<br>
+        body: "Le informamos que se ha agendado la reunión de" +
+        typeWord + ", bajo los siguientes criterios.",
+        items: new SafeString(
+            `<b>Nombre de la invensión:</b> ${project.name}<br>
         <b>Fecha:</b> ${timeStart.getDate()}/
         ${timeStart.getMonth()}/${timeStart.getFullYear()}<br>
         <b>Hora:</b> ${strTimeStart} - ${strTimeFinish}<br>

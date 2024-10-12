@@ -24,7 +24,7 @@ exports.newMessage = onCall(async (request) => {
         {projectId: request.data.projectId});
   }
 
-  const projectRef = db.collection("patents").doc(request.data.projectId);
+  const projectRef = db.collection("projects").doc(request.data.projectId);
   const projectData = projectRef.get();
 
   const userRef = db.collection("users").doc(request.auth.uid);

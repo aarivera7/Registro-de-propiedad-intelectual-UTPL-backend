@@ -47,10 +47,10 @@ async function getProject(userPromise, id, roles, returnRef = false) {
   }
 
   if (returnRef && roles.includes(user.data().rol)) {
-    return db.collection("patents").doc(id);
+    return db.collection("projects").doc(id);
   }
 
-  const project = db.collection("patents").doc(id).get();
+  const project = db.collection("projects").doc(id).get();
 
 
   const user = await userPromise;
@@ -77,7 +77,7 @@ exports.publishProject = onCall(async (request) => {
       (await getProject(userPromise, request.data.id, ["admin"])).data();
 
   const documentRef =
-      db.collection("patents").doc(request.data.id);
+      db.collection("projects").doc(request.data.id);
 
   const batch = db.batch();
 
@@ -122,7 +122,7 @@ exports.publishProject = onCall(async (request) => {
 
   await batch.commit();
 
-  await sendEmail(
+  sendEmail(
       project.email,
       "Solicitud de propiedad intelectual para \"" + project.name + "\"",
       {
@@ -131,11 +131,13 @@ exports.publishProject = onCall(async (request) => {
         body: "Le informamos que la solicitud de propiedad intelectual" +
         " se ha ingresado correctamente, puede descargar el certificado " +
         "emitido en el sistema para su descarga respectiva.",
+
         items: new SafeString(`<b>Nombre de invensión:</b> ${project.name}<br>
         <b>Fecha de presentación:</b> 
         ${Timestamp.now().toDate().toISOString()}<br>
         <b>Tipo de propiedad:</b> ${project.type}<br>
         <b>Certificado para descargar:</b><br>`),
+
         button: new SafeString(`<a class="button"
           href="${project.application.document}"
         target="_black" >IR AL SISTEMA</a>`),
@@ -155,11 +157,11 @@ exports.approveProject = onCall(async (request) => {
   const project =
       (await getProject(userPromise, request.data.id, ["admin"])).data();
 
-  await db.collection("patents").doc(request.data.id).update({
+  await db.collection("projects").doc(request.data.id).update({
     status: "Aprobado",
   });
 
-  await sendEmail(
+  sendEmail(
       project.email,
       "Proyecto de Propiedad Intelectual \"" + project.name + "\" aprobado",
       {
@@ -169,11 +171,13 @@ exports.approveProject = onCall(async (request) => {
         " HA SIDO APROBADO para el inicio del proceso de registro" +
         "de propiedad intelectual. Se da inicio al registro de la solicitud" +
         "con los siguientes datos: ",
+
         items: new SafeString(`<b>Nombre del autor:</b> 
           ${project.nameAuthor}<br>
         <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}<br>
         <b>Tipo de propiedad:</b> ${project.type}<br>`),
+
         button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/"
         target="_black" >IR AL SISTEMA</a>`),
       },
@@ -193,11 +197,11 @@ module.exports.nonApproveProject = onCall(async (request) => {
   const project =
       (await getProject(userPromise, request.data.id, ["admin"])).data();
 
-  await db.collection("patents").doc(request.data.id).update({
+  await db.collection("projects").doc(request.data.id).update({
     status: "No aprobado",
   });
 
-  await sendEmail(
+  sendEmail(
       project.email,
       "Proyecto de Propiedad Intelectual \"" + project.name + "\" rechazado",
       {
@@ -207,11 +211,13 @@ module.exports.nonApproveProject = onCall(async (request) => {
         " NO HA SIDO APROBADO para el inicio del proceso de registro" +
         "de propiedad intelectual. Se ha desaprobado el registro de la" +
         " solicitud con los siguientes datos: ",
+
         items: new SafeString(`<b>Nombre del autor:</b> 
           ${project.nameAuthor}<br>
         <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}<br>
         <b>Tipo de propiedad:</b> ${project.type}<br>`),
+
         button: new SafeString(`<a class="button"
           href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
@@ -229,12 +235,12 @@ module.exports.nonApproveProject = onCall(async (request) => {
 exports.deleteProject = onCall(async (request) => {
   const user = await getUser(request.auth.uid);
 
-  if (user.data().rol === "admin") {
+  if (user.data().rol !== "admin") {
     throw new HttpsError("permission-denied",
         "You are not authorized to perform this action!");
   }
 
-  const document = db.collection("patents").doc(request.data.id);
+  const document = db.collection("projects").doc(request.data.id);
   /* const snap = (await document.get());
   const data = snap.data();
   storage.bucket().deleteFiles({
@@ -274,8 +280,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 + "los requisitos para revisión de estado de la " +
           "técnica HA SIDO APROBADO" + body2,
+
           items: new SafeString(`<b>Fecha de presentación: </b>
           ${project.createDate.toDate().toISOString()}`),
+
           button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
         },
@@ -289,8 +297,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 + "la elaboración de la memoria descriptiva" +
           " HA SIDO APROBADO" + body2,
+
           items: new SafeString(`<b>Fecha de presentación: </b>
           ${project.createDate.toDate().toISOString()}`),
+
           button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
         },
@@ -305,8 +315,10 @@ exports.sendEmail = onCall(async (request) => {
           name: project.nameAuthor,
           body: body1 +
           "se HA SIDO APROBADO todos los requisitos (documentación)" + body2,
+
           items: new SafeString(`<b>Fecha de presentación: </b>
           ${project.createDate.toDate().toISOString()}`),
+
           button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
         },
@@ -325,12 +337,15 @@ exports.sendEmail = onCall(async (request) => {
           "puede ingresar al sistema para descargarlo y proceder " +
           "con la firma electrónica requerida, posterior a ello, " +
           "se requeriere que lo suba en el segundo paso",
+
           items: new SafeString(`<b>Nombre de invensión:</b> 
           ${project.name}
           <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}
           <b>Tipo de propiedad:</b> ${project.type}`),
-          button: new SafeString(`<a class="button" href="${project.contract.document}" 
+
+          button: new SafeString(
+              `<a class="button" href="${project.contract.document}" 
           target="_black" >IR AL SISTEMA</a>`),
         },
     );
@@ -345,7 +360,9 @@ exports.sendEmail = onCall(async (request) => {
           " está listo para la revisión, por favor ingrese al sistema " +
           "para revisar la información ingresada y proceder con la " +
           "aprobación del mismo.",
-          items: new SafeString(`<b>Nombre del autor:</b> ${project.nameAuthor}<br>
+
+          items: new SafeString(
+              `<b>Nombre del autor:</b> ${project.nameAuthor}<br>
           <b>Nombre de invensión:</b> ${project.name}
           <b>Fecha de presentación:</b> ${project.createDate.toDate()
       .toISOString()}<br>
@@ -356,6 +373,7 @@ exports.sendEmail = onCall(async (request) => {
           <b>Breve descripción de la invención:</b> ${project.description}<br>
           <b>Breve resumen de la invención:</b> ${project.summary}<br>
           <b>Tipo de propiedad:</b> Patente<br>`),
+
           button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
         },

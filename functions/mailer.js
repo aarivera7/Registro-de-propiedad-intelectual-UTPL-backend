@@ -13,7 +13,7 @@ const readHTMLFile = async function(path) {
 const user = defineString("USER_EMAIL");
 const pass = defineString("PASSWORD_EMAIL");
 
-const smtpTransport = nodemailer.createTransport({
+/* const smtpTransport = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
   secure: true,
@@ -21,7 +21,23 @@ const smtpTransport = nodemailer.createTransport({
     user: user.value(),
     pass: pass.value(),
   },
+});*/
+
+const smtpTransport = nodemailer.createTransport({
+  service: "microsoft",
+  host: "smtp.office365.com",
+  port: 587,
+  auth: {
+    user: user.value(),
+    pass: pass.value(),
+  },
+  secure: false,
+  secureConnection: true,
+  tls: {
+    ciphers: "SSLv3",
+  },
 });
+
 
 onInit(() => {
   /* {

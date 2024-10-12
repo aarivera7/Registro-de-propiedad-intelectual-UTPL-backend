@@ -26,7 +26,7 @@ exports.onCreateDocument = onObjectFinalized(async (event)=>{
     const typeDocument = fileSplit[2];
     const projectId = fileSplit[3];
 
-    await db.collection("patents").doc(projectId).update({
+    await db.collection("projects").doc(projectId).update({
       [`documents.${typeDocument}.documents`]:
       admin.firestore.FieldValue.arrayUnion(url),
       date: Timestamp.now(),
@@ -58,7 +58,7 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
   const projectId = fileSplit[2];
   const documentType = fileSplit[3];
 
-  const projectData = await db.collection("patents").doc(projectId).get();
+  const projectData = await db.collection("projects").doc(projectId).get();
   const project = projectData.data();
 
   if (event.data.metadata.isReplaced == "true") {
@@ -70,18 +70,19 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
     return;
   }
 
-  if (project.documents[documentType].documents.length == 1) {
-    await db.collection("patents").doc(projectId).update({
-      [`documents.${documentType}`]: admin.firestore.FieldValue.delete(),
-    });
-  } else {
-    project.documents[documentType].documents =
-    project.documents[documentType].documents.filter((doc) =>
-      !doc.includes(filePathHTML));
+  const documentData = await db.collection(`projects`).doc(projectId)
+      .collection("documents").doc(documentType).get();
+  const document = documentData.data();
 
-    await db.collection("patents").doc(projectId).update({
-      [`documents.${documentType}.documents`]:
-      project.documents[documentType].documents,
+  if (document.documents.length == 1) {
+    await db.collection(`projects`).doc(projectId)
+        .collection("documents").doc(documentType).delete();
+  } else {
+    document.documents = document.documents.filter((doc) => !doc.includes(filePathHTML));
+
+    await db.collection("projects").doc(projectId)
+        .collection("documents").doc(documentType).update({
+      documents: project.documents[documentType].documents,
     });
   }
 });

@@ -3,13 +3,14 @@ const app = require("./index");
 const {HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentDeleted, onDocumentUpdated} =
 require("firebase-functions/v2/firestore");
+const {SafeString} = require("handlebars");
 
 const storage = app.storage;
 const sendEmail = require("./mailer");
 
 
 // Eliminar archivos de storage de un proyecto eliminado
-exports.onDeleteProject = onDocumentDeleted("patents/{patentId}",
+exports.onDeleteProject = onDocumentDeleted("projects/{patentId}",
     async (event)=>{
       const snap = event.data;
       const data = snap.data();
@@ -21,7 +22,7 @@ exports.onDeleteProject = onDocumentDeleted("patents/{patentId}",
 
 
 // Enviar un correo electrónico cuando se actualice un documento
-exports.onChangeProject = onDocumentUpdated("patents/{patentId}",
+exports.onChangeProject = onDocumentUpdated("projects/{patentId}",
     async (event) => {
       const beforeData = event.data.before.data();
       const afterData = event.data.after.data();
