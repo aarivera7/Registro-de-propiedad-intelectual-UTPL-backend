@@ -58,8 +58,19 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
   const projectId = fileSplit[2];
   const documentType = fileSplit[3];
 
-  const projectData = await db.collection("projects").doc(projectId).get();
-  const project = projectData.data();
+  // Eliminar el documento individual de un proyecto
+  if (documentType == "application.pdf" ||
+    documentType == "contract.pdf" ||
+    documentType == "legalizedContract.pdf") {
+    
+    const documentEliminate = documentType.split(".")[0];
+
+    await db.collection("projects").doc(projectId).update({
+      [documentEliminate]: admin.firestore.FieldValue.delete(),
+    });
+
+    return;
+  }
 
   if (event.data.metadata.isReplaced == "true") {
     storage.bucket().setMetadata(filePath, {
@@ -82,7 +93,7 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
 
     await db.collection("projects").doc(projectId)
         .collection("documents").doc(documentType).update({
-      documents: project.documents[documentType].documents,
+      documents: document.documents,
     });
   }
 });
