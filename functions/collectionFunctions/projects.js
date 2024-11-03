@@ -95,7 +95,7 @@ exports.publishProject = onCall(async (request) => {
     project.type == "copyright-database" ||
     project.type == "industrial-secret") &&
     project.approveStep1 &&
-    project.progressReviewMeeting.assistance &&
+    project.finalReviewMeeting.assistance &&
     project.status == "Aprobado" &&
     typeof project.application.document == "string") {
     batch.update(documentRef, {
@@ -106,10 +106,10 @@ exports.publishProject = onCall(async (request) => {
         "You are not authorized to perform this action!");
   }
 
-  const certificationsRef = db.collection("certifications").doc();
+  const certificationsRef = db.collection("certifications")
+      .doc(request.data.id);
 
   batch.set(certificationsRef, {
-    projectId: request.data.id,
     finishDate: Timestamp.now(),
     name: project.name,
     projectType: project.type,
@@ -240,14 +240,26 @@ exports.deleteProject = onCall(async (request) => {
         "You are not authorized to perform this action!");
   }
 
-  const document = db.collection("projects").doc(request.data.id);
+  const batch = db.batch();
+
+  const project = db.collection("projects").doc(request.data.id);
   /* const snap = (await document.get());
   const data = snap.data();
   storage.bucket().deleteFiles({
     prefix: `projects/${data.type}/${snap.id}`,
   });*/
 
-  await document.delete();
+  const documents = project.collection("documents");
+
+  const documentsSnap = await documents.get();
+
+  documentsSnap.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  batch.delete(project);
+
+  await batch.commit();
 
   return {message: "Project deleted successfully!"};
 });
@@ -351,7 +363,7 @@ exports.sendEmail = onCall(async (request) => {
     );
   } else if (request.data.typeEmail == "sendEmail-step1") {
     return await sendEmail(
-        "aarivera7@utpl.edu.ec", // sjjumbo3@utpl.edu.ec
+        "sjjumbo3@utpl.edu.ec", // aarivera7@utpl.edu.ec
         "Revisión del proyecto \"" + project.name + "\"",
         {
           title: "REVISIÓN DE PROYECTO",
@@ -377,6 +389,7 @@ exports.sendEmail = onCall(async (request) => {
           button: new SafeString(`<a class="button" href="https://patentes-utpl.web.app/" 
           target="_black" >IR AL SISTEMA</a>`),
         },
+        true,
     );
   }
 });

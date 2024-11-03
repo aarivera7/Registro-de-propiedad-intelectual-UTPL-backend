@@ -1,11 +1,12 @@
 const app = require("./index");
 
 const {HttpsError} = require("firebase-functions/v2/https");
-const {onDocumentDeleted, onDocumentUpdated} =
+const {onDocumentDeleted, onDocumentUpdated, onDocumentCreated} =
 require("firebase-functions/v2/firestore");
 const {SafeString} = require("handlebars");
 
 const storage = app.storage;
+const db = app.db;
 const sendEmail = require("./mailer");
 
 
@@ -19,6 +20,31 @@ exports.onDeleteProject = onDocumentDeleted("projects/{patentId}",
         prefix: `projects/${data.type}/${snap.id}`,
       });
     });
+
+
+// Enviar un correo electrónico cuando se cree un projecto
+exports.onCreateProject = onDocumentCreated("projects/{projectId}",
+    async (event) => {
+      const data = event.data.data();
+
+      const user = (await db.collection("users").doc(data.uid).get()).data();
+
+      await sendEmail(
+          user.email,
+          `Creación del proyecto "${data.name}"`,
+          {
+            title: `CREACIÓN DE PROYECTO`,
+            name: data.nameAuthor,
+            body: `Le informamos que se ha creado el proyecto "${data.name}"`,
+            items: new SafeString(`<b>Descripción:</b> ${data.description}
+              <br><b>Fecha de creación:</b> ${data.createDate.toDate()
+      .toLocaleDateString()}
+              <br><b>Tipo:</b> ${data.type}  
+              `),
+          },
+      );
+    },
+);
 
 
 // Enviar un correo electrónico cuando se actualice un documento

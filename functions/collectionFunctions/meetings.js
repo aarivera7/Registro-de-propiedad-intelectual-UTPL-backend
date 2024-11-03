@@ -63,7 +63,7 @@ exports.addReviewMeeting = onCall(async (request) => {
     step = 3;
   } else if (request.data.type == "final-review") {
     type = "finalReviewMeeting";
-    step = 4;
+    step = project.type == "patent" ? 4 : 2;
   } else if (request.data.type == "start-registration") {
     db.collection("meetings").doc().set({
       type: type,
@@ -93,26 +93,6 @@ exports.addReviewMeeting = onCall(async (request) => {
       throw new HttpsError("internal", "Error sending email!", {error: error});
     });
 
-    /* const mailOptions = {
-      from: user.value(),
-      to: request.data.email,
-      subject: "Reunion para creación de proyecto de propiedad intelectual",
-      html:
-      `<h1>Reunion para creación de proyecto de propiedad intelectual</h1>
-      <pre>
-      <b>Fecha: </b>
-      ${timeStart.getDate()}/${timeStart.getMonth()}/${timeStart.getFullYear()}
-      <b>Hora:</b> ${strTimeStart} - ${strTimeFinish}
-      <b>Lugar:</b> ${request.data.place}
-      <b>Modalidad: </b> ${request.data.modality}</pre>`,
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-    } catch (error) {
-      throw new HttpsError("internal", "Error sending email!", {error: error});
-    }*/
-
     return {message: "Progress Review Meeting added successfully!"};
   } else {
     throw new HttpsError("invalid-argument",
@@ -125,19 +105,13 @@ exports.addReviewMeeting = onCall(async (request) => {
 
   const batch = db.batch();
 
-  batch.update(documentRef, {
-    [type]: {
-      assistance: false,
-      timeStart: timeStart,
-      timeFinish: timeFinish,
-      place: request.data.place,
-      modality: request.data.modality,
-      date: Timestamp.now(),
-    },
-    numStep: step,
-  });
+  let meetingRef;
 
-  const meetingRef = db.collection("meetings").doc();
+  if (project[type] && project[type].meetingRef) {
+    meetingRef = project[type].meetingRef;
+  } else {
+    meetingRef = db.collection("meetings").doc();
+  }
 
   batch.set(meetingRef, {
     projectId: request.data.id,
@@ -150,6 +124,20 @@ exports.addReviewMeeting = onCall(async (request) => {
     modality: request.data.modality,
     assistance: false,
     uid: project.uid,
+  });
+
+  batch.update(documentRef, {
+    [type]: {
+      assistance: false,
+      timeStart: timeStart,
+      timeFinish: timeFinish,
+      place: request.data.place,
+      modality: request.data.modality,
+      date: Timestamp.now(),
+      meetingRef: meetingRef,
+      meetingId: meetingRef.id,
+    },
+    numStep: step,
   });
 
   await batch.commit();
@@ -179,31 +167,64 @@ exports.addReviewMeeting = onCall(async (request) => {
     throw new HttpsError("internal", "Error sending email!", {error: error});
   });
 
-  /* const mailOptions = {
-    from: user.value(),
-    to: project.email,
-    subject: `Reunion para creación de proyecto "${project.name}"`,
-    html:
-    `<h1>Reunion para revisión de proyecto "${project.name}"</h1>
-    <pre>
-    <b>Nombre del autor:</b> ${project.nameAuthor}
-    <b>Nombre del proyecto:</b> ${project.name}
-    <b>Tipo de presentación:</b> ${type}
-    <b>Fecha: </b>
-    ${timeStart.getDate()}/${timeStart.getMonth()}/${timeStart.getFullYear()}
-    <b>Hora:</b> ${strTimeStart} - ${strTimeFinish}
-    <b>Lugar:</b> ${request.data.place}
-    <b>Modalidad: </b> ${request.data.modality}</pre>`,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw new HttpsError("internal", "Error sending email!", {error: error});
-  }*/
-
   return {message: "Progress Review Meeting added successfully!"};
 });
+
+
+// Confirmar asistencia a reunión
+
+exports.confirmAssistance = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Authentication Required!");
+  }
+
+  const meetingRef = db.collection("meetings").doc(request.data.id);
+  const meeting = (await meetingRef.get()).data();
+
+  if (!meeting) {
+    throw new HttpsError("not-found", "Meeting not found!");
+  }
+
+  if (meeting.assistance) {
+    throw new HttpsError("already-exists", "The assistance is already true!");
+  }
+
+  const projectRef = meeting.project;
+  const project = (await projectRef.get()).data();
+
+  if (!project) {
+    throw new HttpsError("not-found", "Project not found!");
+  }
+
+  if (project.uid !== request.auth.uid) {
+    throw new HttpsError("permission-denied",
+        "You are not authorized to perform this action!");
+  }
+
+  const batch = db.batch();
+
+  batch.update(meetingRef, {
+    assistance: true,
+  });
+
+  batch.update(projectRef, {
+    [meeting.type]: {
+      assistance: true,
+      timeStart: meeting.timeStart,
+      timeFinish: meeting.timeFinish,
+      place: meeting.place,
+      modality: meeting.modality,
+      date: meeting.date,
+      meetingRef: meetingRef,
+      meetingId: meetingRef.id,
+    },
+  });
+
+  await batch.commit();
+
+  return {message: "Assistance confirmed successfully!"};
+});
+
 
 /* const nodemailer = require("nodemailer");
 const {defineString} = require("firebase-functions/params");

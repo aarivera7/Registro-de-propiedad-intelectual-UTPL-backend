@@ -62,7 +62,6 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
   if (documentType == "application.pdf" ||
     documentType == "contract.pdf" ||
     documentType == "legalizedContract.pdf") {
-    
     const documentEliminate = documentType.split(".")[0];
 
     await db.collection("projects").doc(projectId).update({
@@ -89,11 +88,12 @@ exports.onDeleteDocument = onObjectDeleted(async (event)=>{
     await db.collection(`projects`).doc(projectId)
         .collection("documents").doc(documentType).delete();
   } else {
-    document.documents = document.documents.filter((doc) => !doc.includes(filePathHTML));
+    document.documents = document.documents
+        .filter((doc) => !doc.includes(filePathHTML));
 
     await db.collection("projects").doc(projectId)
         .collection("documents").doc(documentType).update({
-      documents: document.documents,
-    });
+          documents: document.documents,
+        });
   }
 });

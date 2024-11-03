@@ -12,6 +12,7 @@ const readHTMLFile = async function(path) {
 // Define some parameters
 const user = defineString("USER_EMAIL");
 const pass = defineString("PASSWORD_EMAIL");
+const secondaryEmail = defineString("SECONDARY_EMAIL");
 
 /* const smtpTransport = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -64,7 +65,11 @@ onInit(() => {
 });
 
 
-module.exports = async function sendEmail(to, subject, replacements) {
+module.exports = async function sendEmail(
+    to,
+    subject,
+    replacements,
+    sendCopy = true) {
   const html = await readHTMLFile(__dirname + "/email.html");
 
   const template = handlebars.compile(html);
@@ -76,5 +81,10 @@ module.exports = async function sendEmail(to, subject, replacements) {
     subject: subject,
     html: htmlToSend,
   };
+
+  if (sendCopy) {
+    mailOptions.bcc = [user.value(), secondaryEmail.value()];
+  }
+
   return await smtpTransport.sendMail(mailOptions);
 };
